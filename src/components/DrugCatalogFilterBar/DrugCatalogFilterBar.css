@@ -1,0 +1,33 @@
+/* Поле, кнопка и соседняя иконка — в одну горизонтальную линию */
+.strategy-filter-bar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.strategy-filter-bar__form {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  max-width: none;
+  margin: 0;
+  justify-content: flex-start;
+}
+
+.strategy-filter-bar__form .search-input {
+  flex: 0 1 auto;
+  min-width: 160px;
+  width: 360px;
+  max-width: min(360px, 45vw);
+}
+
+@media (max-width: 640px) {
+  .strategy-filter-bar__form .search-input {
+    width: 200px;
+    max-width: 55vw;
+  }
+}

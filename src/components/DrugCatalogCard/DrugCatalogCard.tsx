@@ -1,0 +1,51 @@
+import { Link } from "react-router-dom";
+import { useState } from "react";
+import { fallbackImageUrl, resolveDrugMediaUrl } from "../../lib/drugMedia";
+import type { DrugCatalogItem } from "../../modules/types";
+import { ROUTES } from "../../routePaths";
+
+function photoSrc(photo_url: string, imageError: boolean): string {
+  if (imageError || !photo_url?.trim()) return fallbackImageUrl();
+  return resolveDrugMediaUrl(photo_url);
+}
+
+/** Разметка карточки как в [inv/templates/index.html](inv/templates/index.html); без формы «В рецепт» (гость). */
+export default function DrugCatalogCard({ drug }: { drug: DrugCatalogItem }) {
+  const [imageError, setImageError] = useState(false);
+  const imageUrl = photoSrc(drug.photo_url, imageError);
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
+  const to = ROUTES.DRUG_DETAIL.replace(":drugId", String(drug.drug_id));
+
+  return (
+    <div className="card-wrapper">
+      <Link to={to} className="card">
+        <img
+          src={imageError ? fallbackImageUrl() : imageUrl}
+          alt={drug.title}
+          onError={handleImageError}
+        />
+        <div className="card__body">
+          <h2 className="card__title">{drug.title}</h2>
+          <div className="card__coefficients">
+            <div className="card__coeff-item card__coeff-item--latency">
+              <span className="card__coeff-label">Разовая (взр.)</span>
+              <span className="card__coeff-value">{drug.adult_dose_mg.toFixed(0)} мг</span>
+            </div>
+            <div className="card__coeff-item card__coeff-item--throughput">
+              <span className="card__coeff-label">На м² ППТ</span>
+              <span className="card__coeff-value">{drug.dose_per_m2_mg.toFixed(0)} мг/м²</span>
+            </div>
+            <div className="card__coeff-item card__coeff-item--reliability">
+              <span className="card__coeff-label">Макс. сут.</span>
+              <span className="card__coeff-value">{drug.max_daily_mg.toFixed(0)} мг</span>
+            </div>
+          </div>
+        </div>
+      </Link>
+    </div>
+  );
+}

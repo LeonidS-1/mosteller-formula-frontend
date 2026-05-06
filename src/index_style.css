@@ -1,0 +1,236 @@
+@import "./inv-styles.css";
+
+/* Дополнения к [inv/resources/css/styles.css](inv/resources/css/styles.css) для React (breadcrumbs, react-bootstrap). */
+
+.main-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  /* Как [inv/resources/css/styles.css](inv/resources/css/styles.css): body — белый, серый только у .toolbar */
+  background: var(--color-white);
+}
+
+.app-breadcrumbs {
+  background: var(--color-white);
+  border-bottom: 1px solid var(--color-border);
+  padding: 10px 32px 12px;
+  box-sizing: border-box;
+}
+
+.app-breadcrumbs__list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.app-breadcrumbs__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-breadcrumbs__item:not(:last-child)::after {
+  content: "/";
+  color: var(--color-text-light);
+  font-weight: 400;
+  user-select: none;
+}
+
+.app-breadcrumbs__link {
+  color: var(--color-primary-dark);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.app-breadcrumbs__link:hover {
+  color: var(--color-primary-accent);
+}
+
+.app-breadcrumbs__current {
+  color: var(--color-text-dark);
+  font-weight: 500;
+}
+
+/* Каталог: `.toolbar` как в шаблоне + крошки слева, поиск по центру (иконка рецепта в header) */
+.toolbar.toolbar--catalog {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: nowrap;
+}
+
+/* Препарат / рецепт: та же полоса (фон, отступы, нижняя граница), крошки слева без «карточки» */
+.toolbar.toolbar--page-nav {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: nowrap;
+}
+
+.toolbar.toolbar--page-nav .toolbar__breadcrumbs {
+  max-width: none;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.toolbar__breadcrumbs {
+  flex-shrink: 0;
+  max-width: min(40vw, 360px);
+}
+
+.toolbar__center {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.app-breadcrumbs--toolbar {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0;
+}
+
+/* Шапка: логотип слева, иконка рецепта справа (как в inv по смыслу, без текстовой nav). */
+.app-header__prescription {
+  margin-left: auto;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Каталог без кнопки «В рецепт» под карточкой — полное скругление, замкнутая нижняя граница. */
+.strategies-page__grid .card-wrapper a.card {
+  border-radius: 15px;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.strategies-page__main {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  display: block;
+}
+
+.strategies-page__grid {
+  min-height: 120px;
+  padding-bottom: 24px;
+}
+
+.strategies-page__empty {
+  padding: 16px 0;
+  color: var(--color-text-medium);
+}
+
+.strategies-page__loading {
+  display: flex;
+  justify-content: center;
+  padding: 32px 0;
+  color: var(--color-primary-accent);
+}
+
+.strategy-filter-bar .form-control,
+.strategy-filter-bar .form-select {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-dark);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.strategy-filter-bar .form-control:focus,
+.strategy-filter-bar .form-select:focus {
+  border-color: var(--color-primary-accent);
+  box-shadow: 0 0 0 2px rgba(8, 195, 220, 0.2);
+}
+
+.strategy-not-found {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--color-text-medium);
+}
+
+.strategy-not-found h1 {
+  font-size: 1.5rem;
+  color: var(--color-primary-dark);
+}
+
+.application-not-found {
+  max-width: 1200px;
+  margin: 24px auto;
+  padding: 0 20px;
+  text-align: center;
+  color: var(--color-text-medium);
+}
+
+.spinner-border {
+  color: var(--color-primary-accent) !important;
+}
+
+.prescription-detail__field {
+  margin-top: 16px;
+}
+
+.prescription-detail__field .form-label {
+  color: var(--color-text-medium);
+  font-size: 14px;
+}
+
+.prescription-detail__field .form-control {
+  background-color: var(--color-white) !important;
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-text-dark) !important;
+  border-radius: 8px;
+}
+
+.prescription-detail__field .form-control:focus {
+  border-color: var(--color-primary-accent) !important;
+  box-shadow: 0 0 0 2px rgba(8, 195, 220, 0.2);
+}
+
+.dose-table .form-control {
+  max-width: 120px;
+  background-color: var(--color-white) !important;
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-text-medium) !important;
+  font-size: 14px;
+}
+
+.dose-table .form-control:focus {
+  border-color: var(--color-primary-accent) !important;
+  box-shadow: 0 0 0 2px rgba(8, 195, 220, 0.15);
+}
+
+.dose-table__col-result .form-control {
+  color: var(--color-primary-accent) !important;
+  font-weight: 600;
+}
+
+.detail-card__video-wrap img.detail-card__video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+header {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: nowrap;
+}
