@@ -111,37 +111,37 @@
 }
 
 /* Каталог без кнопки «В рецепт» под карточкой — полное скругление, замкнутая нижняя граница. */
-.strategies-page__grid .card-wrapper a.card {
+.drug-catalog-page__grid .card-wrapper a.card {
   border-radius: 15px;
   border-bottom: 1px solid var(--color-border-light);
 }
 
-.strategies-page__main {
+.drug-catalog-page__main {
   width: 100%;
   margin: 0;
   padding: 0;
   display: block;
 }
 
-.strategies-page__grid {
+.drug-catalog-page__grid {
   min-height: 120px;
   padding-bottom: 24px;
 }
 
-.strategies-page__empty {
+.drug-catalog-page__empty {
   padding: 16px 0;
   color: var(--color-text-medium);
 }
 
-.strategies-page__loading {
+.drug-catalog-page__loading {
   display: flex;
   justify-content: center;
   padding: 32px 0;
   color: var(--color-primary-accent);
 }
 
-.strategy-filter-bar .form-control,
-.strategy-filter-bar .form-select {
+.drug-catalog-filter-bar .form-control,
+.drug-catalog-filter-bar .form-select {
   background-color: var(--color-white);
   border: 1px solid var(--color-border);
   color: var(--color-text-dark);
@@ -149,13 +149,13 @@
   font-size: 14px;
 }
 
-.strategy-filter-bar .form-control:focus,
-.strategy-filter-bar .form-select:focus {
+.drug-catalog-filter-bar .form-control:focus,
+.drug-catalog-filter-bar .form-select:focus {
   border-color: var(--color-primary-accent);
   box-shadow: 0 0 0 2px rgba(8, 195, 220, 0.2);
 }
 
-.strategy-not-found {
+.drug-not-found {
   flex: 1;
   display: flex;
   align-items: center;
@@ -165,12 +165,12 @@
   color: var(--color-text-medium);
 }
 
-.strategy-not-found h1 {
+.drug-not-found h1 {
   font-size: 1.5rem;
   color: var(--color-primary-dark);
 }
 
-.application-not-found {
+.prescription-not-found {
   max-width: 1200px;
   margin: 24px auto;
   padding: 0 20px;

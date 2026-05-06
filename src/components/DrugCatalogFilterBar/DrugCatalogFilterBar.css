@@ -1,12 +1,11 @@
-/* Поле, кнопка и соседняя иконка — в одну горизонтальную линию */
-.strategy-filter-bar {
+.drug-catalog-filter-bar {
   display: flex;
   flex-direction: row;
   align-items: center;
   flex-shrink: 0;
 }
 
-.strategy-filter-bar__form {
+.drug-catalog-filter-bar__form {
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
@@ -18,7 +17,7 @@
   justify-content: flex-start;
 }
 
-.strategy-filter-bar__form .search-input {
+.drug-catalog-filter-bar__form .search-input {
   flex: 0 1 auto;
   min-width: 160px;
   width: 360px;
@@ -26,7 +25,7 @@
 }
 
 @media (max-width: 640px) {
-  .strategy-filter-bar__form .search-input {
+  .drug-catalog-filter-bar__form .search-input {
     width: 200px;
     max-width: 55vw;
   }

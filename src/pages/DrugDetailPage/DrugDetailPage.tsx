@@ -1,28 +1,55 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Spinner from "react-bootstrap/Spinner";
 import { useParams } from "react-router-dom";
 import { fallbackImageUrl, resolveDrugMediaUrl } from "../../lib/drugMedia";
-import { getMockDrugById } from "../../modules/drugsCatalogMock";
+import { getDrug } from "../../modules/drugsApi";
 import type { DrugCatalogItem } from "../../modules/types";
 
-/** Как [inv/templates/drug.html](inv/templates/drug.html): только колонка с видео, без правой `.detail-card__body` и без кнопки «В рецепт». */
-function DrugDetailInner({ drugId }: { drugId: string }) {
-  const drug = useMemo((): DrugCatalogItem | null => {
-    const resolved = getMockDrugById(Number(drugId));
-    return resolved ?? null;
-  }, [drugId]);
-
+function DrugDetailInner({ drugId }: { drugId: number }) {
+  const [drug, setDrug] = useState<DrugCatalogItem | null>(null);
+  const [loading, setLoading] = useState(true);
   const [mediaError, setMediaError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true);
+     
+    setMediaError(false);
+
+    void (async () => {
+      const data = await getDrug(drugId);
+      if (cancelled) return;
+      setDrug(data);
+      setLoading(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [drugId]);
 
   const videoUrl = useMemo(() => (drug ? resolveDrugMediaUrl(drug.video) : ""), [drug]);
   const posterUrl = useMemo(
-    () => (drug ? resolveDrugMediaUrl(drug.photo_url) || fallbackImageUrl() : fallbackImageUrl()),
+    () =>
+      drug ? resolveDrugMediaUrl(drug.photo_url) || fallbackImageUrl() : fallbackImageUrl(),
     [drug],
   );
   const showVideo = Boolean(drug?.video?.trim()) && !mediaError;
 
+  if (loading) {
+    return (
+      <div className="drug-catalog-page__loading">
+        <Spinner animation="border" role="status" aria-label="Загрузка">
+          <span className="visually-hidden">Загрузка...</span>
+        </Spinner>
+      </div>
+    );
+  }
+
   if (!drug) {
     return (
-      <div className="strategy-not-found">
+      <div className="drug-not-found">
         <h1>Препарат не найден</h1>
       </div>
     );
@@ -93,14 +120,15 @@ function DrugDetailInner({ drugId }: { drugId: string }) {
 
 export default function DrugDetailPage() {
   const { drugId } = useParams();
+  const numericId = drugId ? Number(drugId) : NaN;
 
-  if (!drugId) {
+  if (!drugId || Number.isNaN(numericId)) {
     return (
-      <div className="strategy-not-found">
+      <div className="drug-not-found">
         <h1>Препарат не найден</h1>
       </div>
     );
   }
 
-  return <DrugDetailInner key={drugId} drugId={drugId} />;
+  return <DrugDetailInner key={drugId} drugId={numericId} />;
 }

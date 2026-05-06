@@ -6,6 +6,8 @@ export const DRUGS_CATALOG_MOCK: DrugCatalogItem[] = [
     title: "Парацетамол",
     description:
       "Жаропонижающее и обезболивающее. Рекомендован при лихорадке и боли лёгкой и средней интенсивности.",
+    short_description_en:
+      "Antipyretic and analgesic for mild fever and pain in adults and children.",
     is_deleted: false,
     photo_url: "/mock/paracetamol.jpg",
     video: "/mock/paracetamol.mp4",
@@ -16,7 +18,10 @@ export const DRUGS_CATALOG_MOCK: DrugCatalogItem[] = [
   {
     drug_id: 2,
     title: "Ибупрофен",
-    description: "НПВП, жаропонижающее и противовоспалительное. Применяется при боли и воспалении.",
+    description:
+      "НПВП, жаропонижающее и противовоспалительное. Применяется при боли и воспалении.",
+    short_description_en:
+      "NSAID painkiller for inflammation, fever, joint pain and post-injury swelling.",
     is_deleted: false,
     photo_url: "/mock/ibuprofen.jpg",
     video: "/mock/ibuprofen.mp4",
@@ -29,6 +34,8 @@ export const DRUGS_CATALOG_MOCK: DrugCatalogItem[] = [
     title: "Амоксициллин",
     description:
       "Антибиотик группы пенициллинов. Назначается при бактериальных инфекциях дыхательных путей и ЛОР-органов.",
+    short_description_en:
+      "Penicillin antibiotic capsule for respiratory and ENT bacterial infections.",
     is_deleted: false,
     photo_url: "",
     video: "",
@@ -39,7 +46,10 @@ export const DRUGS_CATALOG_MOCK: DrugCatalogItem[] = [
   {
     drug_id: 4,
     title: "Цетиризин",
-    description: "Антигистаминный препарат. Показан при аллергическом рините и крапивнице.",
+    description:
+      "Антигистаминный препарат. Показан при аллергическом рините и крапивнице.",
+    short_description_en:
+      "Antihistamine pill for allergic rhinitis, urticaria and seasonal pollen.",
     is_deleted: false,
     photo_url: "",
     video: "/mock/cetirizine.mp4",
@@ -50,7 +60,10 @@ export const DRUGS_CATALOG_MOCK: DrugCatalogItem[] = [
   {
     drug_id: 5,
     title: "Омепразол",
-    description: "Ингибитор протонной помпы. Используется при ГЭРБ и язвенной болезни.",
+    description:
+      "Ингибитор протонной помпы. Используется при ГЭРБ и язвенной болезни.",
+    short_description_en:
+      "Proton pump inhibitor for gastric reflux, heartburn and peptic ulcer.",
     is_deleted: false,
     photo_url: "/mock/omeprazole.jpg",
     video: "/mock/omeprazole.mp4",
@@ -61,7 +74,10 @@ export const DRUGS_CATALOG_MOCK: DrugCatalogItem[] = [
   {
     drug_id: 6,
     title: "Домперидон",
-    description: "Противорвотное, прокинетик. При тошноте и функциональных нарушениях ЖКТ.",
+    description:
+      "Противорвотное, прокинетик. При тошноте и функциональных нарушениях ЖКТ.",
+    short_description_en:
+      "Prokinetic antiemetic tablet against nausea and digestive motility issues.",
     is_deleted: false,
     photo_url: "/mock/domperidone.jpg",
     video: "/mock/domperidone.mp4",
@@ -82,4 +98,26 @@ export function filterDrugsCatalog(
   const t = c.title.trim().toLowerCase();
   if (!t) return [...items];
   return items.filter((item) => item.title.toLowerCase().includes(t));
+}
+
+/** Локальный словарь EN-описаний по `drug_id`, чтобы CLIP-поиск работал
+ * даже если бэкенд не возвращает поле `short_description_en`. */
+export const DRUG_EN_DESCRIPTIONS: Record<number, string> = DRUGS_CATALOG_MOCK.reduce(
+  (acc, drug) => {
+    if (drug.short_description_en) {
+      acc[drug.drug_id] = drug.short_description_en;
+    }
+    return acc;
+  },
+  {} as Record<number, string>,
+);
+
+/** Возвращает EN-описание для CLIP: из самой карточки, словаря или fallback по title. */
+export function resolveDrugClipDescription(drug: DrugCatalogItem): string {
+  if (drug.short_description_en && drug.short_description_en.trim()) {
+    return drug.short_description_en.trim();
+  }
+  const fromDict = DRUG_EN_DESCRIPTIONS[drug.drug_id];
+  if (fromDict) return fromDict;
+  return `Pharmaceutical drug ${drug.title} for medical prescription and patient treatment.`;
 }

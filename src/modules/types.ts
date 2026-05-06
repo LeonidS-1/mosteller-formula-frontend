@@ -9,6 +9,15 @@ export interface DrugJSON {
   adult_dose_mg: number;
   dose_per_m2_mg: number;
   max_daily_mg: number;
+  /** Краткое описание на английском (50-100 символов) для CLIP-эмбеддингов. */
+  short_description_en?: string;
+}
+
+/** Ответ `GET /api/prescriptions/cart` (иконка корзины, без авторизации). */
+export interface PrescriptionCartResponse {
+  id?: number;
+  has_draft: boolean;
+  drugs_count: number;
 }
 
 /** Элемент каталога препаратов (как `drug_json` inv). */

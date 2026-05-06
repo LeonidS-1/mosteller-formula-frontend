@@ -16,8 +16,8 @@ export default function DrugCatalogFilterBar({ query, onQueryChange, onSearch }:
   };
 
   return (
-    <div className="strategy-filter-bar">
-      <Form onSubmit={handleSubmit} className="search-form strategy-filter-bar__form">
+    <div className="drug-catalog-filter-bar">
+      <Form onSubmit={handleSubmit} className="search-form drug-catalog-filter-bar__form">
         <Form.Control
           type="text"
           name="query"

@@ -70,7 +70,7 @@ function PrescriptionDraftInner({ prescriptionId }: { prescriptionId: string }) 
   };
 
   if (!data) {
-    return <p className="application-not-found">Рецепт не найден.</p>;
+    return <p className="prescription-not-found">Рецепт не найден.</p>;
   }
 
   const rx = data.prescription;
@@ -167,7 +167,7 @@ export default function PrescriptionDraftPage() {
   const { prescriptionId } = useParams();
 
   if (!prescriptionId) {
-    return <p className="application-not-found">Рецепт не найден.</p>;
+    return <p className="prescription-not-found">Рецепт не найден.</p>;
   }
 
   return <PrescriptionDraftInner key={prescriptionId} prescriptionId={prescriptionId} />;

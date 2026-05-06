@@ -1,8 +1,9 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ROUTES } from "../../routePaths";
-import { PRESCRIPTION_DEMO_ID, prescriptionDraftLineCount } from "../../modules/prescriptionDraftMock";
+import { getPrescriptionCart } from "../../modules/drugsApi";
+import type { PrescriptionCartResponse } from "../../modules/types";
 
-/** Как блок `prescription-icon` в [inv/templates/index.html](inv/templates/index.html). */
 function PrescriptionGlyph() {
   return (
     <svg
@@ -28,12 +29,35 @@ function PrescriptionGlyph() {
 }
 
 export default function PrescriptionCartIcon() {
-  const to = ROUTES.PRESCRIPTION_DRAFT.replace(":prescriptionId", String(PRESCRIPTION_DEMO_ID));
-  const count = prescriptionDraftLineCount();
+  const [cart, setCart] = useState<PrescriptionCartResponse | null>(null);
 
-  if (count > 0) {
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      const result = await getPrescriptionCart();
+      if (cancelled) return;
+      setCart(result);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const hasActiveDraft =
+    Boolean(cart?.has_draft) && typeof cart?.id === "number" && cart.id > 0;
+
+  if (hasActiveDraft && cart) {
+    const to = ROUTES.PRESCRIPTION_DRAFT.replace(":prescriptionId", String(cart.id));
+    const count = cart.drugs_count ?? 0;
     return (
-      <Link to={to} className="prescription-icon" title="Текущий рецепт (черновик)" aria-label={`Рецепт, строк: ${count}`}>
+      <Link
+        to={to}
+        className="prescription-icon"
+        title="Текущий рецепт (черновик)"
+        aria-label={`Рецепт, препаратов: ${count}`}
+      >
         <PrescriptionGlyph />
         <span className="prescription-icon__badge">{count}</span>
       </Link>
@@ -41,7 +65,11 @@ export default function PrescriptionCartIcon() {
   }
 
   return (
-    <div className="prescription-icon prescription-icon--inactive" title="Нет активного черновика рецепта" aria-hidden>
+    <div
+      className="prescription-icon prescription-icon--inactive"
+      title="Нет активного черновика рецепта"
+      aria-hidden
+    >
       <PrescriptionGlyph />
       <span className="prescription-icon__badge prescription-icon__badge--empty">0</span>
     </div>
