@@ -1,144 +1,244 @@
-import { type ChangeEvent, useRef } from "react";
+import { type ChangeEvent, type RefObject, useRef } from "react";
 import { Alert, Button, ProgressBar } from "react-bootstrap";
 import "./DrugImageSearchPanel.css";
 
-interface DrugImageSearchPanelProps {
-  /** Превью выбранного изображения (blob URL). */
+/* ---------- Preview ---------- */
+
+interface DrugImagePreviewProps {
   selectedImage: string | null;
-  /** Прогресс загрузки нейросети, 0..100. */
-  progress: number;
-  /** Текстовые эмбеддинги готовы — можно искать. */
-  ready: boolean;
-  /** Воркер ещё не загрузил модель и идёт прогресс. */
-  showProgress: boolean;
-  /** Сообщение об ошибке инициализации/обработки. */
-  workerError: string | null;
-  /** Каталог пуст — поиск нечего инициализировать. */
-  catalogEmpty: boolean;
-  /** Кнопка загрузки — disabled. */
-  uploadDisabled: boolean;
-  /** Подпись на кнопке загрузки. */
-  uploadLabel: string;
-  /** Можно ли сбросить выбранное изображение. */
-  canReset: boolean;
-  /** Параметры порога/TopK — отображаются под формой как подсказка. */
-  thresholdHint: string;
-  onImageSelected: (file: File) => void;
-  onReset: () => void;
+  className?: string;
+  /** При true клик по превью открывает выбор файла (как «Загрузить изображение»). */
+  previewOpensFilePicker?: boolean;
+  onPreviewOpenFilePicker?: () => void;
+  /** Сброс выбранного фото: крестик справа от превью, только при `selectedImage`. */
+  onClearSelected?: () => void;
 }
 
-export default function DrugImageSearchPanel({
+export function DrugImagePreview({
   selectedImage,
+  className,
+  previewOpensFilePicker,
+  onPreviewOpenFilePicker,
+  onClearSelected,
+}: DrugImagePreviewProps) {
+  const base = ["drug-image-search-panel__preview-wrap", className].filter(Boolean).join(" ");
+  const imgAlt =
+    previewOpensFilePicker && onPreviewOpenFilePicker ? "" : "Загруженное изображение";
+  const inner = selectedImage ? (
+    <img
+      src={selectedImage}
+      alt={imgAlt}
+      className="drug-image-search-panel__preview-image"
+      draggable={false}
+    />
+  ) : (
+    <div className="drug-image-search-panel__placeholder-image">Нет фото</div>
+  );
+
+  if (previewOpensFilePicker && onPreviewOpenFilePicker) {
+    const showClearStrip = Boolean(selectedImage && onClearSelected);
+
+    if (showClearStrip) {
+      const clusterClass = ["drug-image-search-panel__preview-cluster", className]
+        .filter(Boolean)
+        .join(" ");
+      return (
+        <div className={clusterClass}>
+          <button
+            type="button"
+            className="drug-image-search-panel__preview-cluster__open"
+            onClick={onPreviewOpenFilePicker}
+            aria-label="Загрузить другое изображение"
+            title="Загрузить изображение"
+          >
+            {inner}
+          </button>
+          <button
+            type="button"
+            className="drug-image-search-panel__preview-cluster__clear"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClearSelected?.();
+            }}
+            aria-label="Сбросить изображение"
+            title="Сбросить"
+          >
+            <span className="drug-image-search-panel__preview-cluster__clear-mark" aria-hidden>
+              ×
+            </span>
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <button
+        type="button"
+        className={`${base} drug-image-search-panel__preview-wrap--picker`}
+        onClick={onPreviewOpenFilePicker}
+        aria-label="Загрузить изображение для поиска"
+        title="Загрузить изображение"
+      >
+        {inner}
+      </button>
+    );
+  }
+
+  return <div className={base}>{inner}</div>;
+}
+
+/* ---------- Controls ---------- */
+
+interface DrugImageSearchControlsProps {
+  progress: number;
+  ready: boolean;
+  showProgress: boolean;
+  workerError: string | null;
+  catalogEmpty: boolean;
+  modelLoading: boolean;
+  /** Общий ref на скрытый input (например для клика по превью снаружи). */
+  fileInputRef?: RefObject<HTMLInputElement | null>;
+  /** Встраивание в однострочный тулбар каталога (`display: contents` у обёртки). */
+  layout?: "default" | "catalog-toolbar";
+  onLoadModel: () => void;
+  onImageSelected: (file: File) => void;
+}
+
+export function DrugImageSearchControls({
   progress,
   ready,
   showProgress,
   workerError,
   catalogEmpty,
-  uploadDisabled,
-  uploadLabel,
-  canReset,
-  thresholdHint,
+  modelLoading,
+  fileInputRef: fileInputRefProp,
+  layout = "default",
+  onLoadModel,
   onImageSelected,
-  onReset,
-}: DrugImageSearchPanelProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
-  };
+}: DrugImageSearchControlsProps) {
+  const localFileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = fileInputRefProp ?? localFileInputRef;
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      onImageSelected(file);
-    }
+    if (file) onImageSelected(file);
   };
 
-  const handleReset = () => {
-    onReset();
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+  const rowClass =
+    layout === "catalog-toolbar"
+      ? "toolbar__clip-controls"
+      : "drug-image-search-panel__controls-row";
+
+  if (workerError) {
+    const alert = (
+      <Alert variant="info" className="drug-image-search-panel__alert mb-0">
+        Не удалось загрузить модель или обработать запрос: {workerError}
+      </Alert>
+    );
+    if (layout === "catalog-toolbar") {
+      return <div className="toolbar__clip-banner">{alert}</div>;
     }
-  };
+    return alert;
+  }
+
+  if (catalogEmpty) {
+    const empty = (
+      <p className="drug-image-search-panel__empty-catalog mb-0">
+        Сначала загрузите каталог препаратов.
+      </p>
+    );
+    if (layout === "catalog-toolbar") {
+      return <div className="toolbar__clip-banner">{empty}</div>;
+    }
+    return empty;
+  }
 
   return (
-    <section
-      className="drug-image-search-panel"
-      aria-labelledby="drug-image-search-title"
-    >
+    <div className={rowClass}>
+      {ready ? (
+        <input
+          type="file"
+          accept="image/*"
+          ref={fileInputRef}
+          className="drug-image-search-panel__file-input"
+          onChange={handleChange}
+        />
+      ) : (
+        <>
+          <Button
+            className="drug-image-search-panel__btn-upload"
+            variant="primary"
+            size="sm"
+            onClick={onLoadModel}
+            disabled={modelLoading}
+          >
+            {modelLoading ? "Загрузка модели..." : "Поиск по фото"}
+          </Button>
+          {showProgress ? (
+            <ProgressBar
+              className="drug-image-search-panel__progress drug-image-search-panel__progress--inline"
+              now={progress}
+              label={`${Math.round(progress)}%`}
+              animated
+            />
+          ) : null}
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ---------- Combined (legacy default export) ---------- */
+
+interface DrugImageSearchPanelProps {
+  selectedImage: string | null;
+  progress: number;
+  ready: boolean;
+  showProgress: boolean;
+  workerError: string | null;
+  catalogEmpty: boolean;
+  modelLoading: boolean;
+  onLoadModel: () => void;
+  onImageSelected: (file: File) => void;
+  onReset: () => void;
+}
+
+export default function DrugImageSearchPanel(props: DrugImageSearchPanelProps) {
+  const sharedFileInputRef = useRef<HTMLInputElement>(null);
+  const previewOpensPicker =
+    props.ready && !props.workerError && !props.catalogEmpty;
+
+  return (
+    <section className="drug-image-search-panel" aria-labelledby="drug-image-search-title">
       <h2 id="drug-image-search-title" className="drug-image-search-panel__heading">
         Поиск препарата по изображению
       </h2>
-
-      {workerError ? (
-        <Alert variant="info" className="drug-image-search-panel__alert">
-          Не удалось загрузить модель или обработать запрос: {workerError}
-        </Alert>
-      ) : null}
-
-      {catalogEmpty ? (
-        <p className="drug-image-search-panel__empty-catalog">
-          Сначала загрузите каталог препаратов.
-        </p>
-      ) : (
-        <div className="drug-image-search-panel__panel">
-          <input
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            className="drug-image-search-panel__file-input"
-            onChange={handleChange}
+      <div className="drug-image-search-panel__panel">
+        {previewOpensPicker ? (
+          <DrugImagePreview
+            selectedImage={props.selectedImage}
+            previewOpensFilePicker
+            onPreviewOpenFilePicker={() => sharedFileInputRef.current?.click()}
+            onClearSelected={() => {
+              props.onReset();
+              const input = sharedFileInputRef.current;
+              if (input) input.value = "";
+            }}
           />
-
-          <div className="drug-image-search-panel__preview-wrap">
-            {selectedImage ? (
-              <img
-                src={selectedImage}
-                alt="Загруженное изображение"
-                className="drug-image-search-panel__preview-image"
-              />
-            ) : (
-              <div className="drug-image-search-panel__placeholder-image">Нет фото</div>
-            )}
-          </div>
-
-          <div className="drug-image-search-panel__action-panel">
-            <Button
-              className="drug-image-search-panel__btn-upload"
-              variant="primary"
-              onClick={handleUploadClick}
-              disabled={uploadDisabled}
-            >
-              {uploadLabel}
-            </Button>
-
-            {showProgress ? (
-              <ProgressBar
-                className="drug-image-search-panel__progress"
-                now={progress}
-                label={`${Math.round(progress)}%`}
-                animated
-              />
-            ) : null}
-
-            <Button
-              variant="outline-primary"
-              className="drug-image-search-panel__btn-reset"
-              onClick={handleReset}
-              disabled={!canReset}
-            >
-              Сбросить
-            </Button>
-
-            <p className="drug-image-search-panel__hint">{thresholdHint}</p>
-            {ready ? (
-              <p className="drug-image-search-panel__hint drug-image-search-panel__hint--ready">
-                Модель готова к поиску
-              </p>
-            ) : null}
-          </div>
-        </div>
-      )}
+        ) : null}
+        <DrugImageSearchControls
+          fileInputRef={sharedFileInputRef}
+          progress={props.progress}
+          ready={props.ready}
+          showProgress={props.showProgress}
+          workerError={props.workerError}
+          catalogEmpty={props.catalogEmpty}
+          modelLoading={props.modelLoading}
+          onLoadModel={props.onLoadModel}
+          onImageSelected={props.onImageSelected}
+        />
+      </div>
     </section>
   );
 }

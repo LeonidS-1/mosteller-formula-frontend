@@ -12,10 +12,13 @@ env.allowLocalModels = false;
 env.allowRemoteModels = true;
 
 const MODEL_ID = "Xenova/clip-vit-base-patch32";
-/** Размер эмбеддинга для clip-vit-base-patch32 (text/image projection). */
 const EMBEDDING_SIZE = 512;
 
-type ClipDrugItem = { drug_id: number; description_en: string };
+type ClipDrugItem = {
+  drug_id: number;
+  description_en: string;
+  photo_url: string;
+};
 type IncomingMessage =
   | { type: "init"; data: ClipDrugItem[] }
   | { type: "image"; data: Blob };
@@ -47,6 +50,17 @@ class ClipDrugService {
       progress_callback,
     });
   }
+
+  static async computeImageEmbedding(url: string): Promise<number[] | null> {
+    try {
+      const image = await RawImage.read(url);
+      const imageInputs = await this.processor!(image);
+      const { image_embeds } = await this.visionModel!(imageInputs);
+      return Array.from(image_embeds.data as Float32Array);
+    } catch {
+      return null;
+    }
+  }
 }
 
 self.addEventListener("message", async (event: MessageEvent<IncomingMessage>) => {
@@ -58,9 +72,10 @@ self.addEventListener("message", async (event: MessageEvent<IncomingMessage>) =>
       });
 
       const drugs = data;
-      const embeddings: Record<number, number[]> = {};
+      const result: Record<number, { text?: number[]; image?: number[] }> = {};
+
       if (drugs.length === 0) {
-        self.postMessage({ type: "text_embeddings_ready", data: embeddings });
+        self.postMessage({ type: "embeddings_ready", data: result });
         return;
       }
 
@@ -77,10 +92,19 @@ self.addEventListener("message", async (event: MessageEvent<IncomingMessage>) =>
         const start = i * EMBEDDING_SIZE;
         const end = start + EMBEDDING_SIZE;
         const vector = flat.slice(start, end);
-        embeddings[drugs[i].drug_id] = Array.from(vector);
+        result[drugs[i].drug_id] = { text: Array.from(vector) };
       }
 
-      self.postMessage({ type: "text_embeddings_ready", data: embeddings });
+      for (const drug of drugs) {
+        if (!drug.photo_url?.trim()) continue;
+        const imgEmb = await ClipDrugService.computeImageEmbedding(drug.photo_url);
+        if (imgEmb) {
+          if (!result[drug.drug_id]) result[drug.drug_id] = {};
+          result[drug.drug_id].image = imgEmb;
+        }
+      }
+
+      self.postMessage({ type: "embeddings_ready", data: result });
       return;
     }
 

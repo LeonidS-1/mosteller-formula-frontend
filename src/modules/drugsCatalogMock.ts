@@ -7,7 +7,7 @@ export const DRUGS_CATALOG_MOCK: DrugCatalogItem[] = [
     description:
       "Жаропонижающее и обезболивающее. Рекомендован при лихорадке и боли лёгкой и средней интенсивности.",
     short_description_en:
-      "Antipyretic and analgesic for mild fever and pain in adults and children.",
+      "White box with blue and purple design.",
     is_deleted: false,
     photo_url: "/mock/paracetamol.jpg",
     video: "/mock/paracetamol.mp4",
@@ -21,7 +21,7 @@ export const DRUGS_CATALOG_MOCK: DrugCatalogItem[] = [
     description:
       "НПВП, жаропонижающее и противовоспалительное. Применяется при боли и воспалении.",
     short_description_en:
-      "NSAID painkiller for inflammation, fever, joint pain and post-injury swelling.",
+      "White box with green text and stripes.",
     is_deleted: false,
     photo_url: "/mock/ibuprofen.jpg",
     video: "/mock/ibuprofen.mp4",
@@ -35,7 +35,7 @@ export const DRUGS_CATALOG_MOCK: DrugCatalogItem[] = [
     description:
       "Антибиотик группы пенициллинов. Назначается при бактериальных инфекциях дыхательных путей и ЛОР-органов.",
     short_description_en:
-      "Penicillin antibiotic capsule for respiratory and ENT bacterial infections.",
+      "White box with orange stripe and blue text.",
     is_deleted: false,
     photo_url: "",
     video: "",
@@ -49,7 +49,7 @@ export const DRUGS_CATALOG_MOCK: DrugCatalogItem[] = [
     description:
       "Антигистаминный препарат. Показан при аллергическом рините и крапивнице.",
     short_description_en:
-      "Antihistamine pill for allergic rhinitis, urticaria and seasonal pollen.",
+      "Green and white box with blue text.",
     is_deleted: false,
     photo_url: "",
     video: "/mock/cetirizine.mp4",
@@ -63,7 +63,7 @@ export const DRUGS_CATALOG_MOCK: DrugCatalogItem[] = [
     description:
       "Ингибитор протонной помпы. Используется при ГЭРБ и язвенной болезни.",
     short_description_en:
-      "Proton pump inhibitor for gastric reflux, heartburn and peptic ulcer.",
+      "White box with cyan and green stripes.",
     is_deleted: false,
     photo_url: "/mock/omeprazole.jpg",
     video: "/mock/omeprazole.mp4",
@@ -77,7 +77,7 @@ export const DRUGS_CATALOG_MOCK: DrugCatalogItem[] = [
     description:
       "Противорвотное, прокинетик. При тошноте и функциональных нарушениях ЖКТ.",
     short_description_en:
-      "Prokinetic antiemetic tablet against nausea and digestive motility issues.",
+      "White box with black/blue branding.",
     is_deleted: false,
     photo_url: "/mock/domperidone.jpg",
     video: "/mock/domperidone.mp4",

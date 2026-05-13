@@ -1,20 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { normalizedSimilarityScore } from "../modules/cosineSimilarity";
+import { cosineSimilarity } from "../modules/cosineSimilarity";
 
 export interface ClipDrugItem {
   drug_id: number;
   description_en: string;
+  photo_url: string;
 }
 
 export interface ProcessedClipDrugItem extends ClipDrugItem {
   score: number;
   isVisible: boolean;
-  embedding?: number[];
+  textEmbedding?: number[];
+  imageEmbedding?: number[];
 }
 
-/** Порог из диапазона задания (0.4–0.9) для нормированного score = (cos+1)/2. */
+/** Порог cosine-сходства (image-to-image даёт разброс ~0.5–0.95). */
 export const CLIP_SIMILARITY_THRESHOLD = 0.55;
 export const CLIP_TOP_K = 5;
+
+/**
+ * Вес image-to-image vs text-to-image при комбинированном скоринге.
+ * 0.8 = 80% визуальное сходство, 20% текстовое.
+ */
+const IMAGE_WEIGHT = 0.8;
 
 function normalizeProgress(raw: unknown): number | null {
   if (raw === null || typeof raw !== "object") return null;
@@ -27,7 +35,7 @@ function normalizeProgress(raw: unknown): number | null {
 
 export function useDrugImageSearch(initialItems: ClipDrugItem[], enabled: boolean) {
   const [items, setItems] = useState<ProcessedClipDrugItem[]>([]);
-  const [imageEmbedding, setImageEmbedding] = useState<number[] | null>(null);
+  const [userImageEmbedding, setUserImageEmbedding] = useState<number[] | null>(null);
   const [ready, setReady] = useState(false);
   const [progress, setProgress] = useState(0);
   const [workerError, setWorkerError] = useState<string | null>(null);
@@ -38,7 +46,7 @@ export function useDrugImageSearch(initialItems: ClipDrugItem[], enabled: boolea
   const lastUploadedImageNameRef = useRef<string | null>(null);
 
   const itemsKey = useMemo(
-    () => initialItems.map((item) => `${item.drug_id}:${item.description_en}`).join("|"),
+    () => initialItems.map((item) => `${item.drug_id}:${item.description_en}:${item.photo_url}`).join("|"),
     [initialItems],
   );
 
@@ -53,26 +61,24 @@ export function useDrugImageSearch(initialItems: ClipDrugItem[], enabled: boolea
       setItems([]);
       setReady(false);
       setProgress(0);
-      setImageEmbedding(null);
+      setUserImageEmbedding(null);
       setWorkerError(null);
       return;
     }
 
     if (initialItems.length === 0) {
-       
       setItems([]);
       setReady(true);
       setProgress(100);
-      setImageEmbedding(null);
+      setUserImageEmbedding(null);
       setWorkerError(null);
       return;
     }
 
-     
     setItems(initialItems.map((item) => ({ ...item, score: 0, isVisible: true })));
     setReady(false);
     setProgress(0);
-    setImageEmbedding(null);
+    setUserImageEmbedding(null);
     setWorkerError(null);
 
     const worker = new Worker(
@@ -95,11 +101,21 @@ export function useDrugImageSearch(initialItems: ClipDrugItem[], enabled: boolea
           }
           break;
         }
-        case "text_embeddings_ready": {
+        case "embeddings_ready": {
           embeddingsReadyRef.current = true;
-          const dict = data as Record<number, number[] | undefined>;
+          const dict = data as Record<
+            number,
+            { text?: number[]; image?: number[] } | undefined
+          >;
           setItems((prev) =>
-            prev.map((item) => ({ ...item, embedding: dict[item.drug_id] })),
+            prev.map((item) => {
+              const entry = dict[item.drug_id];
+              return {
+                ...item,
+                textEmbedding: entry?.text,
+                imageEmbedding: entry?.image,
+              };
+            }),
           );
           setReady(true);
           setProgress(100);
@@ -111,7 +127,7 @@ export function useDrugImageSearch(initialItems: ClipDrugItem[], enabled: boolea
           break;
         }
         case "image_embedding_ready":
-          setImageEmbedding(data as number[]);
+          setUserImageEmbedding(data as number[]);
           break;
         case "error":
           setWorkerError(typeof data === "string" ? data : "Ошибка CLIP-воркера");
@@ -133,17 +149,39 @@ export function useDrugImageSearch(initialItems: ClipDrugItem[], enabled: boolea
   }, [itemsKey, enabled]);
 
   useEffect(() => {
-    if (!imageEmbedding) return;
+    if (!userImageEmbedding) return;
 
     setItems((prevItems) => {
-      if (prevItems.length === 0 || !prevItems.some((it) => it.embedding)) {
-        return prevItems;
-      }
+      if (prevItems.length === 0) return prevItems;
+
+      const hasAnyEmbedding = prevItems.some(
+        (it) => it.textEmbedding || it.imageEmbedding,
+      );
+      if (!hasAnyEmbedding) return prevItems;
 
       const processed = prevItems.map((item) => {
-        if (!item.embedding) return { ...item, score: 0, isVisible: false };
-        const score = normalizedSimilarityScore(imageEmbedding, item.embedding);
-        return { ...item, score, isVisible: false };
+        const imgScore = item.imageEmbedding
+          ? cosineSimilarity(userImageEmbedding, item.imageEmbedding)
+          : 0;
+        const txtScore = item.textEmbedding
+          ? cosineSimilarity(userImageEmbedding, item.textEmbedding)
+          : 0;
+
+        const hasImg = Boolean(item.imageEmbedding);
+        const hasTxt = Boolean(item.textEmbedding);
+
+        let score: number;
+        if (hasImg && hasTxt) {
+          score = IMAGE_WEIGHT * imgScore + (1 - IMAGE_WEIGHT) * txtScore;
+        } else if (hasImg) {
+          score = imgScore;
+        } else {
+          score = txtScore;
+        }
+
+        const normalized = (score + 1) / 2;
+
+        return { ...item, score: normalized, isVisible: false };
       });
 
       processed.sort((a, b) => b.score - a.score);
@@ -183,7 +221,7 @@ export function useDrugImageSearch(initialItems: ClipDrugItem[], enabled: boolea
 
       return processed;
     });
-  }, [imageEmbedding]);
+  }, [userImageEmbedding]);
 
   function searchByImage(file: File) {
     lastUploadedImageNameRef.current = file.name || "uploaded image";
@@ -195,7 +233,7 @@ export function useDrugImageSearch(initialItems: ClipDrugItem[], enabled: boolea
   }
 
   function resetSearch() {
-    setImageEmbedding(null);
+    setUserImageEmbedding(null);
     setWorkerError(null);
     pendingFileRef.current = null;
     setItems((prev) => {
@@ -208,7 +246,7 @@ export function useDrugImageSearch(initialItems: ClipDrugItem[], enabled: boolea
     items,
     ready,
     progress,
-    imageEmbedding,
+    imageEmbedding: userImageEmbedding,
     workerError,
     searchByImage,
     resetSearch,

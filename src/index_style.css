@@ -57,12 +57,85 @@
   font-weight: 500;
 }
 
-/* Каталог: `.toolbar` как в шаблоне + крошки слева, поиск по центру (иконка рецепта в header) */
-.toolbar.toolbar--catalog {
-  justify-content: flex-start;
+/* Каталог: одна строка — превью, CLIP, поиск, корзина */
+.toolbar.toolbar--catalog.toolbar--catalog-oneline {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 16px;
-  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 10px 14px;
+  row-gap: 10px;
+}
+
+.toolbar.toolbar--catalog.toolbar--catalog-oneline .toolbar__clip-controls {
+  display: contents;
+}
+
+.toolbar.toolbar--catalog.toolbar--catalog-oneline .toolbar__clip-banner {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+.toolbar.toolbar--catalog.toolbar--catalog-oneline .toolbar__preview {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toolbar.toolbar--catalog.toolbar--catalog-oneline .toolbar__filter {
+  flex: 1 1 260px;
+  min-width: 200px;
+  max-width: 560px;
+}
+
+.toolbar.toolbar--catalog.toolbar--catalog-oneline .toolbar__filter .drug-catalog-filter-bar__form {
+  width: 100%;
+}
+
+.toolbar.toolbar--catalog.toolbar--catalog-oneline .toolbar__filter .search-input {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 220px;
+  max-width: none;
+  height: 44px;
+  font-size: 15px;
+  padding: 0 16px;
+}
+
+.toolbar.toolbar--catalog.toolbar--catalog-oneline .toolbar__filter .search-btn {
+  height: 44px;
+  padding: 0 26px;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.toolbar.toolbar--catalog.toolbar--catalog-oneline .toolbar__clip-controls .drug-image-search-panel__btn-upload {
+  height: 44px;
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: 14px;
+}
+
+.toolbar.toolbar--catalog.toolbar--catalog-oneline .toolbar__clip-controls .drug-image-search-panel__progress--inline {
+  width: 140px;
+  height: 22px;
+}
+
+.toolbar.toolbar--catalog.toolbar--catalog-oneline .prescription-cart-row {
+  flex-shrink: 0;
+}
+
+.toolbar.toolbar--catalog.toolbar--catalog-oneline .prescription-cart-row svg {
+  width: 38px;
+  height: 38px;
+}
+
+.toolbar.toolbar--catalog.toolbar--catalog-oneline .toolbar__preview .drug-image-search-panel__preview-image,
+.toolbar.toolbar--catalog.toolbar--catalog-oneline .toolbar__preview .drug-image-search-panel__placeholder-image {
+  width: 88px;
+  height: 88px;
 }
 
 /* Препарат / рецепт: та же полоса (фон, отступы, нижняя граница), крошки слева без «карточки» */
@@ -84,17 +157,6 @@
   max-width: min(40vw, 360px);
 }
 
-.toolbar__center {
-  flex: 1;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  min-width: 0;
-}
-
 .app-breadcrumbs--toolbar {
   background: transparent !important;
   border: none !important;
@@ -102,16 +164,8 @@
   margin: 0;
 }
 
-/* Шапка: логотип слева, иконка рецепта справа (как в inv по смыслу, без текстовой nav). */
-.app-header__prescription {
-  margin-left: auto;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-}
-
 /* Каталог без кнопки «В рецепт» под карточкой — полное скругление, замкнутая нижняя граница. */
-.drug-catalog-page__grid .card-wrapper a.card {
+.drug-catalog-page__grid .card-wrapper a.card.card--no-add-btn {
   border-radius: 15px;
   border-bottom: 1px solid var(--color-border-light);
 }
@@ -228,9 +282,3 @@
   display: block;
 }
 
-header {
-  justify-content: flex-start;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: nowrap;
-}

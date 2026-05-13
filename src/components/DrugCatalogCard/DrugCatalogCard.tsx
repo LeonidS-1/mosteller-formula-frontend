@@ -1,16 +1,30 @@
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
 import { fallbackImageUrl, resolveDrugMediaUrl } from "../../lib/drugMedia";
 import type { DrugCatalogItem } from "../../modules/types";
 import { ROUTES } from "../../routePaths";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { addDrugToPrescription } from "../../store/slices/prescriptionSlice";
 
 function photoSrc(photo_url: string, imageError: boolean): string {
   if (imageError || !photo_url?.trim()) return fallbackImageUrl();
   return resolveDrugMediaUrl(photo_url);
 }
 
-/** Разметка карточки как в [inv/templates/index.html](inv/templates/index.html); без формы «В рецепт» (гость). */
-export default function DrugCatalogCard({ drug }: { drug: DrugCatalogItem }) {
+/** Карточка препарата. Для авторизованных — кнопка «Добавить в рецепт» (м-м через thunk). */
+export default function DrugCatalogCard({
+  drug,
+  similarityScore,
+}: {
+  drug: DrugCatalogItem;
+  similarityScore?: number;
+}) {
+  const dispatch = useAppDispatch();
+  const isAuthenticated = useAppSelector((s) => s.user.isAuthenticated);
+  const applicationMutationLoading = useAppSelector(
+    (s) => s.prescription.applicationMutationLoading,
+  );
+
   const [imageError, setImageError] = useState(false);
   const imageUrl = photoSrc(drug.photo_url, imageError);
 
@@ -18,11 +32,28 @@ export default function DrugCatalogCard({ drug }: { drug: DrugCatalogItem }) {
     setImageError(true);
   };
 
+  const handleAdd = async (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAuthenticated) return;
+    try {
+      await dispatch(addDrugToPrescription(drug.drug_id)).unwrap();
+    } catch (err) {
+      window.alert(String(err));
+    }
+  };
+
   const to = ROUTES.DRUG_DETAIL.replace(":drugId", String(drug.drug_id));
+  const cardClassName = `card${!isAuthenticated ? " card--no-add-btn" : ""}`;
 
   return (
     <div className="card-wrapper">
-      <Link to={to} className="card">
+      <Link to={to} className={cardClassName}>
+        {similarityScore != null && (
+          <div className="card__similarity-badge">
+            {(similarityScore * 100).toFixed(1)}% сходство
+          </div>
+        )}
         <img
           src={imageError ? fallbackImageUrl() : imageUrl}
           alt={drug.title}
@@ -46,6 +77,16 @@ export default function DrugCatalogCard({ drug }: { drug: DrugCatalogItem }) {
           </div>
         </div>
       </Link>
+      {isAuthenticated ? (
+        <button
+          type="button"
+          className="card-add-btn"
+          onClick={handleAdd}
+          disabled={applicationMutationLoading}
+        >
+          {applicationMutationLoading ? "Добавление…" : "Добавить в рецепт"}
+        </button>
+      ) : null}
     </div>
   );
 }

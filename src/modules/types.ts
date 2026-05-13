@@ -13,15 +13,15 @@ export interface DrugJSON {
   short_description_en?: string;
 }
 
-/** Ответ `GET /api/prescriptions/cart` (иконка корзины, без авторизации). */
-export interface PrescriptionCartResponse {
+/** Элемент каталога препаратов (как `drug_json` inv). */
+export type DrugCatalogItem = DrugJSON;
+
+/** Ответ `GET /api/prescriptions/cart`. */
+export interface PrescriptionCartJSON {
   id?: number;
   has_draft: boolean;
   drugs_count: number;
 }
-
-/** Элемент каталога препаратов (как `drug_json` inv). */
-export type DrugCatalogItem = DrugJSON;
 
 /** Соответствует prescription_json inv. */
 export interface PrescriptionJSON {

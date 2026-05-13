@@ -14,11 +14,32 @@ export function cosineSimilarity(vecA: number[], vecB: number[]): number {
   return dot / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
-/** Нормированный score в [0, 1]: подходит под пороги задания (0.4–0.9). */
-export function normalizedSimilarityScore(vecA: number[], vecB: number[]): number {
-  const cos = cosineSimilarity(vecA, vecB);
-  const score = (cos + 1) / 2;
-  if (score < 0) return 0;
-  if (score > 1) return 1;
-  return score;
+/**
+ * Softmax-нормализация косинусных сходств с температурным масштабом CLIP.
+ *
+ * CLIP обучается с learnable logit_scale (≈100 у clip-vit-base-patch32).
+ * Softmax экспоненциально усиливает малые разницы в cosine-сходствах,
+ * давая осмысленное ранжирование вместо «всё ~62%».
+ */
+const DEFAULT_LOGIT_SCALE = 50;
+
+export function clipSoftmaxScores(
+  imageVec: number[],
+  textVecs: (number[] | undefined)[],
+  logitScale: number = DEFAULT_LOGIT_SCALE,
+): number[] {
+  if (textVecs.length === 0) return [];
+
+  const cosines = textVecs.map((tv) =>
+    tv ? cosineSimilarity(imageVec, tv) : -Infinity,
+  );
+
+  const finite = cosines.filter((c) => isFinite(c));
+  if (finite.length === 0) return cosines.map(() => 0);
+
+  const logits = cosines.map((c) => (isFinite(c) ? c * logitScale : -Infinity));
+  const maxLogit = Math.max(...finite) * logitScale;
+  const exps = logits.map((l) => (isFinite(l) ? Math.exp(l - maxLogit) : 0));
+  const sum = exps.reduce((a, b) => a + b, 0);
+  return exps.map((e) => (sum > 0 ? e / sum : 0));
 }

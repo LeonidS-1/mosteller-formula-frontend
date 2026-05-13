@@ -1,174 +1,284 @@
-import type { FormEvent } from "react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Form from "react-bootstrap/Form";
+import Spinner from "react-bootstrap/Spinner";
 import { useNavigate, useParams } from "react-router-dom";
 import { fallbackImageUrl, resolveDrugMediaUrl } from "../../lib/drugMedia";
 import { calculatePediatricDoseMg } from "../../lib/pediatricDose";
-import { clonePrescriptionDetail, loadStaticPrescriptionDetail } from "../../modules/prescriptionDraftMock";
-import type { PrescriptionDetailResponse, PrescriptionDrugDetailJSON } from "../../modules/types";
+import {
+  clonePrescriptionDetail,
+  loadStaticPrescriptionDetail,
+} from "../../modules/prescriptionDraftMock";
+import type {
+  PrescriptionDetailResponse,
+  PrescriptionDrugDetailJSON,
+} from "../../modules/types";
 import { ROUTES } from "../../routePaths";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import {
+  deletePrescription,
+  fetchPrescriptionDetail,
+  formPrescription,
+  removePrescriptionDrugLine,
+} from "../../store/slices/prescriptionSlice";
+import "./PrescriptionDraftPage.css";
 
-function withRecalculatedDoses(src: PrescriptionDetailResponse): PrescriptionDetailResponse {
-  const lines = src.lines.map((row) => ({
-    ...row,
-    dose: calculatePediatricDoseMg(
-      row.height_cm,
-      row.weight_kg,
-      row.drug.dose_per_m2_mg,
-      row.drug.max_daily_mg,
-    ),
-  }));
-  const completed = lines.filter((l) => l.height_cm > 0 && l.weight_kg > 0).length;
-  return {
-    ...src,
-    lines,
-    prescription: { ...src.prescription, completed_dose_line_count: completed },
-  };
-}
-
-/** Как [inv/templates/prescription.html](inv/templates/prescription.html): доза считается по росту/весу (Mosteller), не вводится. */
-function PrescriptionDraftInner({ prescriptionId }: { prescriptionId: string }) {
-  const navigate = useNavigate();
-  const initial = loadStaticPrescriptionDetail(Number(prescriptionId));
-  const [data, setData] = useState<PrescriptionDetailResponse | null>(() =>
-    initial ? withRecalculatedDoses(clonePrescriptionDetail(initial)) : null,
-  );
-
-  const setDoctorFullName = (doctor_full_name: string) => {
-    setData((prev) =>
-      prev ? { ...prev, prescription: { ...prev.prescription, doctor_full_name } } : prev,
-    );
-  };
-
-  const updateLine = (drugId: number, patch: Partial<Pick<PrescriptionDrugDetailJSON, "height_cm" | "weight_kg">>) => {
-    setData((prev) => {
-      if (!prev) return prev;
-      const lines = prev.lines.map((row) => {
-        if (row.drug_id !== drugId) return row;
-        const next = { ...row, ...patch };
-        const dose = calculatePediatricDoseMg(
-          next.height_cm,
-          next.weight_kg,
-          next.drug.dose_per_m2_mg,
-          next.drug.max_daily_mg,
-        );
-        return { ...next, dose };
-      });
-      const completed = lines.filter((l) => l.height_cm > 0 && l.weight_kg > 0).length;
-      return {
-        ...prev,
-        lines,
-        prescription: { ...prev.prescription, completed_dose_line_count: completed },
-      };
-    });
-  };
-
-  const handleDelete = (e: FormEvent) => {
-    e.preventDefault();
-    if (!window.confirm("Удалить черновик рецепта?")) return;
-    navigate(ROUTES.DRUG_CATALOG);
-  };
-
-  if (!data) {
-    return <p className="prescription-not-found">Рецепт не найден.</p>;
-  }
-
-  const rx = data.prescription;
-
-  return (
-    <div className="prescription-detail">
-      <div className="prescription-detail__header-card">
-        <h1 className="prescription-detail__title">Рецепт на расчёт детской дозы</h1>
-        <div className="prescription-detail__info">
-          <div className="prescription-detail__info-item">
-            <strong>Номер рецепта:</strong> {rx.prescription_id}
-          </div>
-          <div className="prescription-detail__info-item">
-            <strong>Препаратов в рецепте:</strong> {data.lines.length}
-          </div>
-        </div>
-        <Form.Group className="prescription-detail__field" controlId="prescription-doctor-full-name">
-          <Form.Label>ФИО врача</Form.Label>
-          <Form.Control
-            type="text"
-            value={rx.doctor_full_name}
-            onChange={(e) => setDoctorFullName(e.target.value)}
-            placeholder="Фамилия Имя Отчество"
-          />
-        </Form.Group>
-      </div>
-
-      <table className="dose-table">
-        <thead>
-          <tr>
-            <th className="dose-table__col-photo">Изображение</th>
-            <th>Препарат</th>
-            <th>Рост (см)</th>
-            <th>Вес (кг)</th>
-            <th className="dose-table__col-result">Доза (мг)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.lines.map((row) => {
-            const photo = resolveDrugMediaUrl(row.drug.photo_url) || fallbackImageUrl();
-            const doseMg = calculatePediatricDoseMg(
-              row.height_cm,
-              row.weight_kg,
-              row.drug.dose_per_m2_mg,
-              row.drug.max_daily_mg,
-            );
-            return (
-              <tr key={`${row.prescription_id}-${row.drug_id}`}>
-                <td className="dose-table__col-photo">
-                  <img src={photo} alt={row.drug.title} />
-                </td>
-                <td>{row.drug.title}</td>
-                <td>
-                  <Form.Control
-                    type="number"
-                    min={0}
-                    value={row.height_cm}
-                    onChange={(e) =>
-                      updateLine(row.drug_id, {
-                        height_cm: Number(e.target.value) || 0,
-                      })
-                    }
-                  />
-                </td>
-                <td>
-                  <Form.Control
-                    type="number"
-                    min={0}
-                    value={row.weight_kg}
-                    onChange={(e) =>
-                      updateLine(row.drug_id, {
-                        weight_kg: Number(e.target.value) || 0,
-                      })
-                    }
-                  />
-                </td>
-                <td className="dose-table__col-result">{doseMg.toFixed(1)}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-
-      <form className="prescription-detail__delete-form" onSubmit={handleDelete}>
-        <button type="submit" className="btn-delete">
-          Удалить черновик
-        </button>
-      </form>
-    </div>
-  );
-}
+type RowDraft = Pick<PrescriptionDrugDetailJSON, "height_cm" | "weight_kg">;
 
 export default function PrescriptionDraftPage() {
   const { prescriptionId } = useParams();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { isAuthenticated } = useAppSelector((s) => s.user);
+  const {
+    detail,
+    detailLoading,
+    detailError,
+    applicationMutationLoading,
+    itemMutationLoading,
+  } = useAppSelector((s) => s.prescription);
 
-  if (!prescriptionId) {
-    return <p className="prescription-not-found">Рецепт не найден.</p>;
+  const [mockData, setMockData] = useState<PrescriptionDetailResponse | null>(null);
+  const [doctorDraft, setDoctorDraft] = useState("");
+  const [rowDrafts, setRowDrafts] = useState<Record<number, RowDraft>>({});
+
+  const reloadMock = useCallback(() => {
+    if (!prescriptionId) return;
+    const n = Number(prescriptionId);
+    const fallback = loadStaticPrescriptionDetail(n);
+    setMockData(fallback ? clonePrescriptionDetail(fallback) : null);
+  }, [prescriptionId]);
+
+  useEffect(() => {
+    if (!prescriptionId || !isAuthenticated) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMockData(null);
+    void dispatch(fetchPrescriptionDetail(Number(prescriptionId))).then((a) => {
+      if (fetchPrescriptionDetail.rejected.match(a)) {
+        reloadMock();
+      }
+    });
+  }, [prescriptionId, isAuthenticated, dispatch, reloadMock]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate(ROUTES.SIGN_IN, { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  const data = detail ?? mockData;
+
+  useEffect(() => {
+    if (!data) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDoctorDraft(data.prescription.doctor_full_name ?? "");
+    const next: Record<number, RowDraft> = {};
+    data.lines.forEach((row) => {
+      next[row.drug_id] = {
+        height_cm: row.height_cm,
+        weight_kg: row.weight_kg,
+      };
+    });
+    setRowDrafts(next);
+  }, [data]);
+
+  const rx = data?.prescription;
+  const prescriptionIdNum = rx?.prescription_id;
+  const isDraft = rx?.status === "draft";
+  const busy = applicationMutationLoading || detailLoading;
+
+  const updateRowDraft = useCallback((drugId: number, patch: Partial<RowDraft>) => {
+    setRowDrafts((prev) => {
+      const base = prev[drugId] ?? { height_cm: 0, weight_kg: 0 };
+      return {
+        ...prev,
+        [drugId]: { ...base, ...patch },
+      };
+    });
+  }, []);
+
+  const rmBusy = (drugId: number) => Boolean(itemMutationLoading[`rm-${drugId}`]);
+
+  const handleRemoveRow = (drugId: number) => {
+    if (!prescriptionIdNum || !isDraft || mockData) return;
+    if (!window.confirm("Убрать препарат из рецепта?")) return;
+    void dispatch(removePrescriptionDrugLine({ drugId, prescriptionId: prescriptionIdNum }));
+  };
+
+  const handleForm = () => {
+    if (!prescriptionIdNum || !isDraft || mockData) return;
+    void dispatch(formPrescription(prescriptionIdNum));
+  };
+
+  const handleDeletePrescription = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!prescriptionIdNum || !isDraft) return;
+    if (!window.confirm("Удалить черновик рецепта?")) return;
+    if (mockData) {
+      navigate(ROUTES.DRUG_CATALOG, { replace: true });
+      return;
+    }
+    void dispatch(deletePrescription(prescriptionIdNum)).then(() => {
+      navigate(ROUTES.DRUG_CATALOG, { replace: true });
+    });
+  };
+
+  if (!isAuthenticated) return null;
+
+  if (detailLoading && !data) {
+    return (
+      <div className="prescription-detail-page">
+        <div className="prescription-detail-page__loading">
+          <Spinner animation="border" />
+        </div>
+      </div>
+    );
   }
 
-  return <PrescriptionDraftInner key={prescriptionId} prescriptionId={prescriptionId} />;
+  if (!data || !rx || prescriptionIdNum == null) {
+    return (
+      <div className="prescription-detail-page">
+        <p className="prescription-not-found">
+          {detailError ? detailError : "Рецепт не найден."}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="prescription-detail-page">
+      {busy ? (
+        <div className="prescription-detail-page__blocking" aria-live="polite">
+          <Spinner animation="border" size="sm" /> Обработка…
+        </div>
+      ) : null}
+      <div
+        className={`prescription-detail ${busy ? "prescription-detail--blocked" : ""}`}
+      >
+        <div className="prescription-detail__header-card">
+          <h1 className="prescription-detail__title">Рецепт на расчёт детской дозы</h1>
+          <div className="prescription-detail__info">
+            <div className="prescription-detail__info-item">
+              <strong>Номер рецепта:</strong> {prescriptionIdNum}
+            </div>
+            <div className="prescription-detail__info-item">
+              <strong>Препаратов в рецепте:</strong> {data.lines.length}
+            </div>
+          </div>
+          <Form.Group className="prescription-detail__field" controlId="prescription-doctor-full-name">
+            <Form.Label>ФИО врача</Form.Label>
+            <Form.Control
+              type="text"
+              value={doctorDraft}
+              onChange={(e) => setDoctorDraft(e.target.value)}
+              placeholder="Фамилия Имя Отчество"
+              disabled={!isDraft || Boolean(mockData)}
+            />
+          </Form.Group>
+          {isDraft && !mockData ? (
+            <div className="prescription-detail__method-actions">
+              <button
+                type="button"
+                className="prescription-detail__method-btn prescription-detail__method-btn--accent"
+                disabled={busy}
+                onClick={handleForm}
+              >
+                Оформить рецепт
+              </button>
+            </div>
+          ) : null}
+        </div>
+
+        <table className="dose-table">
+          <thead>
+            <tr>
+              <th className="dose-table__col-photo">Изображение</th>
+              <th>Препарат</th>
+              <th>Рост (см)</th>
+              <th>Вес (кг)</th>
+              <th className="dose-table__col-result">Доза (мг)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.lines.map((row) => {
+              const photo = resolveDrugMediaUrl(row.drug.photo_url) || fallbackImageUrl();
+              const draft = rowDrafts[row.drug_id];
+              const localHeight = draft?.height_cm ?? row.height_cm;
+              const localWeight = draft?.weight_kg ?? row.weight_kg;
+              const previewDose = calculatePediatricDoseMg(
+                localHeight,
+                localWeight,
+                row.drug.dose_per_m2_mg,
+                row.drug.max_daily_mg,
+              );
+              const serverDose = row.dose;
+              return (
+                <tr key={`${row.prescription_id}-${row.drug_id}`}>
+                  <td className="dose-table__col-photo">
+                    <img src={photo} alt={row.drug.title} />
+                  </td>
+                  <td>{row.drug.title}</td>
+                  <td>
+                    <Form.Control
+                      type="number"
+                      min={0}
+                      value={localHeight}
+                      disabled={!isDraft}
+                      onChange={(e) =>
+                        updateRowDraft(row.drug_id, {
+                          height_cm: Number(e.target.value) || 0,
+                        })
+                      }
+                    />
+                  </td>
+                  <td>
+                    <Form.Control
+                      type="number"
+                      min={0}
+                      value={localWeight}
+                      disabled={!isDraft}
+                      onChange={(e) =>
+                        updateRowDraft(row.drug_id, {
+                          weight_kg: Number(e.target.value) || 0,
+                        })
+                      }
+                    />
+                  </td>
+                  <td className="dose-table__col-result">
+                    {isDraft
+                      ? previewDose.toFixed(1)
+                      : serverDose != null
+                        ? serverDose.toFixed(1)
+                        : "—"}
+                  </td>
+                  {isDraft ? (
+                    <td className="dose-table__actions">
+                      <button
+                        type="button"
+                        className="prescription-detail__row-btn prescription-detail__row-btn--danger"
+                        disabled={busy || rmBusy(row.drug_id) || Boolean(mockData)}
+                        onClick={() => handleRemoveRow(row.drug_id)}
+                      >
+                        Убрать препарат
+                      </button>
+                    </td>
+                  ) : null}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+
+        {isDraft ? (
+          <form
+            className="prescription-detail__delete-form"
+            onSubmit={handleDeletePrescription}
+          >
+            <button type="submit" className="btn-delete" disabled={busy || Boolean(mockData)}>
+              Удалить рецепт
+            </button>
+          </form>
+        ) : null}
+      </div>
+    </div>
+  );
 }
