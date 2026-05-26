@@ -12,7 +12,7 @@ import type {
   PrescriptionJSON,
 } from "../../modules/types";
 import { apiErrMessage } from "../utils/apiError";
-import { logoutUser } from "./userSlice";
+import { resetUserSession } from "./userSlice";
 
 function mapDrug(s: InvBackendSerializerDrugJSON): DrugJSON {
   return {
@@ -43,6 +43,28 @@ function mapPrescriptionRow(p: InvBackendSerializerPrescriptionJSON): Prescripti
   };
 }
 
+function prescriptionListsEqual(a: PrescriptionJSON[], b: PrescriptionJSON[]): boolean {
+  if (a.length !== b.length) return false;
+  const byId = (rows: PrescriptionJSON[]) =>
+    [...rows].sort((x, y) => x.prescription_id - y.prescription_id);
+  const left = byId(a);
+  const right = byId(b);
+  return left.every((row, i) => {
+    const other = right[i];
+    return (
+      row.prescription_id === other.prescription_id &&
+      row.status === other.status &&
+      row.created_at === other.created_at &&
+      row.creator_login === other.creator_login &&
+      row.moderator_login === other.moderator_login &&
+      row.forming_date === other.forming_date &&
+      row.finish_date === other.finish_date &&
+      row.doctor_full_name === other.doctor_full_name &&
+      row.completed_dose_line_count === other.completed_dose_line_count
+    );
+  });
+}
+
 function asDetail(data: unknown): PrescriptionDetailResponse | null {
   if (!data || typeof data !== "object") return null;
   const o = data as Record<string, unknown>;
@@ -68,8 +90,17 @@ function asDetail(data: unknown): PrescriptionDetailResponse | null {
   return { prescription, lines };
 }
 
+function todayDateISO(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 function defaultListFilters() {
-  return { fromDate: "", toDate: "", status: "" };
+  const today = todayDateISO();
+  return { fromDate: today, toDate: today, status: "" };
 }
 
 interface PrescriptionState {
@@ -283,9 +314,11 @@ export const finishPrescription = createAsyncThunk(
   },
 );
 
+export type FetchPrescriptionsListArg = { background?: boolean } | void;
+
 export const fetchPrescriptionsList = createAsyncThunk(
   "prescription/fetchList",
-  async (_, { getState, rejectWithValue }) => {
+  async (_arg: FetchPrescriptionsListArg, { getState, rejectWithValue }) => {
     try {
       const st = getState() as {
         prescription: { filters: ReturnType<typeof defaultListFilters> };
@@ -322,8 +355,7 @@ const prescriptionSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(logoutUser.fulfilled, () => buildInitialState())
-      .addCase(logoutUser.rejected, () => buildInitialState())
+      .addCase(resetUserSession, () => buildInitialState())
       .addCase(fetchPrescriptionCart.pending, (state) => {
         state.cartLoading = true;
       })
@@ -357,13 +389,17 @@ const prescriptionSlice = createSlice({
         state.detailLoading = false;
         state.detailError = action.payload as string;
       })
-      .addCase(fetchPrescriptionsList.pending, (state) => {
-        state.listLoading = true;
+      .addCase(fetchPrescriptionsList.pending, (state, action) => {
+        if (!action.meta.arg?.background) {
+          state.listLoading = true;
+        }
         state.listError = null;
       })
       .addCase(fetchPrescriptionsList.fulfilled, (state, action) => {
         state.listLoading = false;
-        state.list = action.payload;
+        if (!prescriptionListsEqual(state.list, action.payload)) {
+          state.list = action.payload;
+        }
       })
       .addCase(fetchPrescriptionsList.rejected, (state, action) => {
         state.listLoading = false;

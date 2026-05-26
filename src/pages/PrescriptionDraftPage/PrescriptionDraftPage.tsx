@@ -19,6 +19,8 @@ import {
   fetchPrescriptionDetail,
   formPrescription,
   removePrescriptionDrugLine,
+  updatePrescriptionDraft,
+  updatePrescriptionDrugLine,
 } from "../../store/slices/prescriptionSlice";
 import "./PrescriptionDraftPage.css";
 
@@ -96,7 +98,37 @@ export default function PrescriptionDraftPage() {
     });
   }, []);
 
+  const lineBusyKey = (drugId: number) =>
+    Boolean(itemMutationLoading[`line-${drugId}-${prescriptionIdNum ?? 0}`]);
   const rmBusy = (drugId: number) => Boolean(itemMutationLoading[`rm-${drugId}`]);
+
+  const handleSaveDoctor = () => {
+    if (!prescriptionIdNum || !isDraft || mockData) return;
+    void dispatch(
+      updatePrescriptionDraft({
+        prescriptionId: prescriptionIdNum,
+        doctorFullName: doctorDraft,
+      }),
+    );
+  };
+
+  const handleSaveRow = (drugId: number) => {
+    if (!prescriptionIdNum || !isDraft || mockData) return;
+    const d = rowDrafts[drugId];
+    if (!d) return;
+    void dispatch(
+      updatePrescriptionDrugLine({
+        drugId,
+        prescriptionId: prescriptionIdNum,
+        body: {
+          prescription_id: prescriptionIdNum,
+          drug_id: drugId,
+          height_cm: d.height_cm,
+          weight_kg: d.weight_kg,
+        },
+      }),
+    );
+  };
 
   const handleRemoveRow = (drugId: number) => {
     if (!prescriptionIdNum || !isDraft || mockData) return;
@@ -178,6 +210,14 @@ export default function PrescriptionDraftPage() {
             <div className="prescription-detail__method-actions">
               <button
                 type="button"
+                className="prescription-detail__method-btn"
+                disabled={busy}
+                onClick={handleSaveDoctor}
+              >
+                Сохранить ФИО
+              </button>
+              <button
+                type="button"
                 className="prescription-detail__method-btn prescription-detail__method-btn--accent"
                 disabled={busy}
                 onClick={handleForm}
@@ -252,14 +292,24 @@ export default function PrescriptionDraftPage() {
                   </td>
                   {isDraft ? (
                     <td className="dose-table__actions">
-                      <button
-                        type="button"
-                        className="prescription-detail__row-btn prescription-detail__row-btn--danger"
-                        disabled={busy || rmBusy(row.drug_id) || Boolean(mockData)}
-                        onClick={() => handleRemoveRow(row.drug_id)}
-                      >
-                        Убрать препарат
-                      </button>
+                      <div className="dose-table__actions-inner">
+                        <button
+                          type="button"
+                          className="prescription-detail__row-btn"
+                          disabled={busy || lineBusyKey(row.drug_id) || Boolean(mockData)}
+                          onClick={() => handleSaveRow(row.drug_id)}
+                        >
+                          Сохранить рост и вес
+                        </button>
+                        <button
+                          type="button"
+                          className="prescription-detail__row-btn prescription-detail__row-btn--danger"
+                          disabled={busy || rmBusy(row.drug_id) || Boolean(mockData)}
+                          onClick={() => handleRemoveRow(row.drug_id)}
+                        >
+                          Убрать препарат
+                        </button>
+                      </div>
                     </td>
                   ) : null}
                 </tr>

@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Spinner from "react-bootstrap/Spinner";
+import { authLoginRequest } from "../../modules/authApi";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { loginUser } from "../../store/slices/userSlice";
 import { fetchPrescriptionCart } from "../../store/slices/prescriptionSlice";
+import {
+  setAuthError,
+  setAuthLoading,
+  setUserSession,
+} from "../../store/slices/userSlice";
+import { apiErrMessage } from "../../store/utils/apiError";
 import { ROUTES } from "../../routePaths";
 import "./SignInPage.css";
 
@@ -20,12 +26,17 @@ export default function SignInPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.login || !form.password) return;
+    dispatch(setAuthLoading(true));
+    dispatch(setAuthError(null));
     try {
-      await dispatch(loginUser(form)).unwrap();
+      await authLoginRequest(form);
+      dispatch(setUserSession({ login: form.login }));
       void dispatch(fetchPrescriptionCart());
       navigate(ROUTES.DRUG_CATALOG, { replace: true });
-    } catch {
-      void 0;
+    } catch (err) {
+      dispatch(setAuthError(apiErrMessage(err)));
+    } finally {
+      dispatch(setAuthLoading(false));
     }
   };
 

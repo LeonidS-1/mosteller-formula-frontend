@@ -45,17 +45,20 @@ export default function PrescriptionsPage() {
     setDraftStatus(filters.status);
   }, [filters.fromDate, filters.toDate, filters.status]);
 
-  const load = useCallback(() => {
-    void dispatch(fetchPrescriptionsList());
-  }, [dispatch]);
+  const load = useCallback(
+    (background = false) => {
+      void dispatch(fetchPrescriptionsList(background ? { background: true } : undefined));
+    },
+    [dispatch],
+  );
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate(ROUTES.SIGN_IN, { replace: true });
       return;
     }
-    load();
-    const id = window.setInterval(load, POLLING_MS);
+    load(false);
+    const id = window.setInterval(() => load(true), POLLING_MS);
     return () => window.clearInterval(id);
   }, [isAuthenticated, navigate, load]);
 
@@ -132,9 +135,9 @@ export default function PrescriptionsPage() {
               </Form.Group>
             ) : null}
           </div>
-          <Button className="prescriptions-page__apply" onClick={handleApplyFilters}>
+          <button type="button" className="prescriptions-page__apply" onClick={handleApplyFilters}>
             Применить фильтры
-          </Button>
+          </button>
         </section>
 
         {listError ? <div className="prescriptions-page__error">{listError}</div> : null}
@@ -157,6 +160,7 @@ export default function PrescriptionsPage() {
                 <th>Завершение</th>
                 <th>Модератор</th>
                 <th>ФИО врача</th>
+                <th>Результатов</th>
                 {isModerator ? <th>Действия</th> : null}
               </tr>
             </thead>
@@ -194,6 +198,7 @@ export default function PrescriptionsPage() {
                     </td>
                     <td>{row.moderator_login ?? "—"}</td>
                     <td>{row.doctor_full_name || "—"}</td>
+                    <td>{row.completed_dose_line_count}</td>
                     {isModerator ? (
                       <td>
                         {row.status === "formed" ? (

@@ -5,28 +5,73 @@
 }
 
 .inv-navbar__inner {
+  position: relative;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0 16px;
 }
 
-@media (min-width: 992px) {
-  .inv-navbar__inner {
-    flex-wrap: nowrap;
-  }
+/* Строка меню в одну линию с логотипом, пока всё помещается */
+.inv-navbar--inline .inv-navbar__inner {
+  flex-wrap: nowrap;
+}
+
+.inv-navbar--inline .inv-navbar__toggle {
+  display: none !important;
+}
+
+.inv-navbar--inline .navbar-collapse {
+  display: flex !important;
+  flex-basis: auto;
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.inv-navbar--inline .inv-navbar__nav {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  margin-left: auto;
+}
+
+/* Бургер: меню уходит в collapse только когда не влезает рядом с брендом */
+.inv-navbar--compact .inv-navbar__toggle {
+  display: block;
+  margin-left: auto;
+}
+
+.inv-navbar--compact .inv-navbar__inner {
+  flex-wrap: wrap;
 }
 
 .inv-navbar .header-home {
   display: inline-flex;
   align-items: center;
   text-decoration: none;
+  flex-shrink: 0;
 }
 
 .inv-navbar .header-home__icon {
   height: 36px;
   width: auto;
   display: block;
+}
+
+.inv-navbar__nav-measure {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+  height: 0;
+  overflow: hidden;
+}
+
+.inv-navbar__nav-measure .inv-navbar__nav {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  width: max-content;
 }
 
 .inv-navbar__toggle {
@@ -53,6 +98,7 @@
   padding: 8px 14px !important;
   border-radius: 8px;
   transition: background-color 0.2s ease, color 0.2s ease;
+  white-space: nowrap;
 }
 
 .inv-nav-link:hover {
@@ -99,5 +145,3 @@
   font-weight: 500;
   line-height: 1.2;
 }
-
-
