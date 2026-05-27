@@ -1,10 +1,8 @@
 import { Link } from "react-router-dom";
-import { useState, type MouseEvent } from "react";
+import { useState } from "react";
 import { fallbackImageUrl, resolveDrugMediaUrl } from "../../lib/drugMedia";
 import type { DrugCatalogItem } from "../../modules/types";
 import { ROUTES } from "../../routePaths";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { addDrugToPrescription } from "../../store/slices/prescriptionSlice";
 
 function photoSrc(photo_url: string, imageError: boolean): string {
   if (imageError || !photo_url?.trim()) return fallbackImageUrl();
@@ -19,12 +17,6 @@ export default function DrugCatalogCard({
   drug: DrugCatalogItem;
   similarityScore?: number;
 }) {
-  const dispatch = useAppDispatch();
-  const isAuthenticated = useAppSelector((s) => s.user.isAuthenticated);
-  const applicationMutationLoading = useAppSelector(
-    (s) => s.prescription.applicationMutationLoading,
-  );
-
   const [imageError, setImageError] = useState(false);
   const imageUrl = photoSrc(drug.photo_url, imageError);
 
@@ -32,19 +24,8 @@ export default function DrugCatalogCard({
     setImageError(true);
   };
 
-  const handleAdd = async (e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!isAuthenticated) return;
-    try {
-      await dispatch(addDrugToPrescription(drug.drug_id)).unwrap();
-    } catch (err) {
-      window.alert(String(err));
-    }
-  };
-
   const to = ROUTES.DRUG_DETAIL.replace(":drugId", String(drug.drug_id));
-  const cardClassName = `card${!isAuthenticated ? " card--no-add-btn" : ""}`;
+  const cardClassName = "card card--no-add-btn";
 
   return (
     <div className="card-wrapper">
@@ -77,16 +58,6 @@ export default function DrugCatalogCard({
           </div>
         </div>
       </Link>
-      {isAuthenticated ? (
-        <button
-          type="button"
-          className="card-add-btn"
-          onClick={handleAdd}
-          disabled={applicationMutationLoading}
-        >
-          {applicationMutationLoading ? "Добавление…" : "Добавить в рецепт"}
-        </button>
-      ) : null}
     </div>
   );
 }

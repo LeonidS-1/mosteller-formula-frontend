@@ -86,7 +86,7 @@
 
 .toolbar.toolbar--catalog.toolbar--catalog-oneline .toolbar__filter {
   flex: 1 1 260px;
-  min-width: 200px;
+  min-width: 180px;
   max-width: 560px;
 }
 
@@ -97,7 +97,7 @@
 .toolbar.toolbar--catalog.toolbar--catalog-oneline .toolbar__filter .search-input {
   flex: 1 1 auto;
   width: 100%;
-  min-width: 220px;
+  min-width: 160px;
   max-width: none;
   height: 44px;
   font-size: 15px;
@@ -143,7 +143,7 @@
   justify-content: flex-start;
   align-items: center;
   gap: 16px;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 .toolbar.toolbar--page-nav .toolbar__breadcrumbs {
@@ -280,5 +280,48 @@
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+@media (max-width: 992px) {
+  .toolbar.toolbar--catalog.toolbar--catalog-oneline {
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+  .toolbar.toolbar--catalog.toolbar--catalog-oneline .toolbar__filter {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+
+  .toolbar.toolbar--catalog.toolbar--catalog-oneline .toolbar__clip-controls .drug-image-search-panel__progress--inline {
+    width: 120px;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-breadcrumbs {
+    padding: 10px 16px 12px;
+  }
+
+  .toolbar.toolbar--catalog.toolbar--catalog-oneline {
+    justify-content: stretch;
+  }
+
+  .toolbar.toolbar--catalog.toolbar--catalog-oneline .toolbar__preview {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .toolbar.toolbar--catalog.toolbar--catalog-oneline .toolbar__filter .search-input {
+    min-width: 0;
+    height: 40px;
+    font-size: 14px;
+  }
+
+  .toolbar.toolbar--catalog.toolbar--catalog-oneline .toolbar__filter .search-btn {
+    height: 40px;
+    padding: 0 16px;
+    font-size: 14px;
+  }
 }
 

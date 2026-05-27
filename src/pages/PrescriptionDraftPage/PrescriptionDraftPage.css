@@ -88,6 +88,12 @@
   color: var(--color-white);
 }
 
+.prescription-detail__table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .dose-table__actions {
   text-align: center;
   vertical-align: middle;
@@ -136,4 +142,31 @@
 
 .prescription-detail__row-btn--danger:hover:not(:disabled) {
   background: #fff3f3;
+}
+
+@media (max-width: 992px) {
+  .prescription-detail-page {
+    padding: 20px 14px 36px;
+  }
+
+  .prescription-detail__table-wrap {
+    margin: 0 -6px;
+    padding: 0 6px 6px;
+  }
+
+  .dose-table {
+    min-width: 860px;
+  }
+}
+
+@media (max-width: 640px) {
+  .prescription-detail-page__blocking {
+    width: 100%;
+    max-width: 100%;
+    justify-content: center;
+  }
+
+  .dose-table {
+    min-width: 760px;
+  }
 }

@@ -62,6 +62,7 @@ import type {
   ResponseType,
 } from "axios";
 import axios from "axios";
+import { TARGET_CONFIG } from "../target_config";
 
 export type QueryParamsType = Record<string | number, unknown>;
 
@@ -111,7 +112,7 @@ export class HttpClient<SecurityDataType = unknown> {
   }: ApiConfig<SecurityDataType> = {}) {
     this.instance = axios.create({
       ...axiosConfig,
-      baseURL: axiosConfig.baseURL || "//localhost:8080/api",
+      baseURL: axiosConfig.baseURL || TARGET_CONFIG.apiBaseUrl,
     });
     this.secure = secure;
     this.format = format;

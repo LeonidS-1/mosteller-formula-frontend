@@ -1,6 +1,7 @@
 import { Api } from "./Api";
+import { TARGET_CONFIG } from "../target_config";
 
-const baseURL = import.meta.env.VITE_API_BASE_URL ?? "/api";
+const baseURL = TARGET_CONFIG.apiBaseUrl;
 
 export const api = new Api({
   baseURL,

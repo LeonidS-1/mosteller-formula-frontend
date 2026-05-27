@@ -1,7 +1,4 @@
-function minioBase(): string {
-  const raw = import.meta.env.VITE_MINIO_BASE as string | undefined;
-  return raw?.replace(/\/$/, "") ?? "";
-}
+import { TARGET_CONFIG } from "../target_config";
 
 export function fallbackImageUrl(): string {
   return "/mock/drug-pill-placeholder.svg";
@@ -18,7 +15,7 @@ export function resolveDrugMediaUrl(key: string): string {
   ) {
     return key;
   }
-  const base = minioBase();
+  const base = TARGET_CONFIG.mediaBaseUrl.replace(/\/$/, "");
   if (base) {
     return `${base}/${key.replace(/^\//, "")}`;
   }

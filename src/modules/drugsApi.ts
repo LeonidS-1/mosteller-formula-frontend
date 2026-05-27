@@ -8,8 +8,9 @@ import {
   filterDrugsCatalog,
   getMockDrugById,
 } from "./drugsCatalogMock";
+import { TARGET_CONFIG } from "../target_config";
 
-const baseURL = import.meta.env.VITE_API_BASE_URL ?? "/api";
+const baseURL = TARGET_CONFIG.apiBaseUrl;
 
 /** Axios для каталога препаратов (услуги). По заданию: только axios, без codegen и без thunk. */
 export const drugsAxios = axios.create({

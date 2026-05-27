@@ -8,7 +8,6 @@ import {
   DrugImagePreview,
   DrugImageSearchControls,
 } from "../../components/DrugImageSearchPanel/DrugImageSearchPanel";
-import PrescriptionCartRow from "../../components/PrescriptionCartRow/PrescriptionCartRow";
 import { resolveDrugMediaUrl } from "../../lib/drugMedia";
 import {
   useDrugImageSearch,
@@ -225,8 +224,6 @@ export default function DrugCatalogPage() {
           onQueryChange={setDraftTitle}
           onSearch={handleSearch}
         />
-
-        <PrescriptionCartRow />
 
         <DrugCatalogGuestSearchAgent onApplyCriteria={handleApplyAgentCriteria} />
       </div>

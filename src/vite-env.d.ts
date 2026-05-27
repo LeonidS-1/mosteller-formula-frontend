@@ -1,10 +1,12 @@
 /// <reference types="vite/client" />
+/// <reference types="vite-plugin-pwa/client" />
 
 interface ImportMetaEnv {
-  /** База без завершающего слэша, например `/minio/test` или `http://localhost:9000/test` */
-  readonly VITE_MINIO_BASE?: string;
-  /** Имя бакета, если база задаётся только хостом (опционально) */
-  readonly VITE_MINIO_BUCKET?: string;
+  readonly VITE_LAN_IP?: string;
+  readonly VITE_API_PORT?: string;
+  readonly VITE_MEDIA_PORT?: string;
+  readonly VITE_MEDIA_BUCKET?: string;
+  readonly VITE_USE_DEV_PROXY?: string;
 }
 
 interface ImportMeta {

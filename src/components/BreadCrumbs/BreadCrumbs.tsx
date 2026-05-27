@@ -25,33 +25,11 @@ export default function BreadCrumbs({ className }: BreadCrumbsProps) {
       return [{ label: "Главная", to: ROUTES.DRUG_CATALOG }, { label: title }];
     }
 
-    if (pathname === ROUTES.PRESCRIPTIONS) {
-      return [
-        { label: "Главная", to: ROUTES.DRUG_CATALOG },
-        { label: "Рецепты" },
-      ];
-    }
-
     const rxMatch = matchPath(ROUTES.PRESCRIPTION_DRAFT, pathname);
     if (rxMatch?.params.prescriptionId) {
       return [
         { label: "Главная", to: ROUTES.DRUG_CATALOG },
-        { label: "Рецепты", to: ROUTES.PRESCRIPTIONS },
         { label: `Рецепт №${rxMatch.params.prescriptionId}` },
-      ];
-    }
-
-    if (pathname === ROUTES.SIGN_IN) {
-      return [
-        { label: "Главная", to: ROUTES.DRUG_CATALOG },
-        { label: "Вход" },
-      ];
-    }
-
-    if (pathname === ROUTES.SIGN_UP) {
-      return [
-        { label: "Главная", to: ROUTES.DRUG_CATALOG },
-        { label: "Регистрация" },
       ];
     }
 

@@ -1,6 +1,7 @@
 import axios from "axios";
+import { TARGET_CONFIG } from "../target_config";
 
-const baseURL = import.meta.env.VITE_API_BASE_URL ?? "/api";
+const baseURL = TARGET_CONFIG.apiBaseUrl;
 
 /** Axios для /users/* без codegen (по заданию: для auth только axios). */
 export const authAxios = axios.create({

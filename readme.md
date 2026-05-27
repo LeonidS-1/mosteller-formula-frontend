@@ -1,3 +1,34 @@
+# inv_frontend
+
+## Запуск локально
+
+```bash
+npm install
+npm run dev
+```
+
+## Сборка
+
+```bash
+npm run build
+```
+
+## Деплой на GitHub Pages
+
+1. Укажите подпуть репозитория в переменной `VITE_PAGES_BASE_PATH`.
+2. Выполните деплой:
+
+```bash
+VITE_PAGES_BASE_PATH="/<repo-name>/" npm run deploy
+```
+
+После публикации приложение будет доступно по адресу:
+`https://<github-username>.github.io/<repo-name>/`
+
+## PWA
+
+PWA настраивается через `vite-plugin-pwa` и включена как для `preview`, так и для `dev`.
+Проверка: DevTools -> Application -> Manifest / Service Workers.
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

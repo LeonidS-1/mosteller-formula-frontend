@@ -3,27 +3,18 @@ import { Link } from "react-router-dom";
 import Container from "react-bootstrap/Container";
 import Nav from "react-bootstrap/Nav";
 import Navbar from "react-bootstrap/Navbar";
-import { authLogoutRequest } from "../../modules/authApi";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { resetUserSession } from "../../store/slices/userSlice";
 import { ROUTES } from "../../routePaths";
 import "./AppHeader.css";
 
 type HeaderNavItemsProps = {
   draftActive: boolean;
   draftId: number | null | undefined;
-  isAuthenticated: boolean;
-  username: string;
-  onLogout: () => void;
   onNavigate?: () => void;
 };
 
 function HeaderNavItems({
   draftActive,
   draftId,
-  isAuthenticated,
-  username,
-  onLogout,
   onNavigate,
 }: HeaderNavItemsProps) {
   const afterNav = () => onNavigate?.();
@@ -33,17 +24,6 @@ function HeaderNavItems({
       <Nav.Link as={Link} to={ROUTES.DRUG_CATALOG} className="inv-nav-link" eventKey="catalog" onClick={afterNav}>
         Каталог препаратов
       </Nav.Link>
-      {isAuthenticated ? (
-        <Nav.Link
-          as={Link}
-          to={ROUTES.PRESCRIPTIONS}
-          className="inv-nav-link"
-          eventKey="prescriptions"
-          onClick={afterNav}
-        >
-          Рецепты
-        </Nav.Link>
-      ) : null}
       {draftActive && draftId != null ? (
         <Nav.Link
           as={Link}
@@ -59,39 +39,13 @@ function HeaderNavItems({
           Текущий рецепт
         </Nav.Link>
       )}
-      {isAuthenticated ? (
-        <Nav.Link
-          as={Link}
-          to={ROUTES.DRUG_CATALOG}
-          className="inv-nav-link inv-nav-link--logout"
-          eventKey="logout"
-          onClick={(e) => {
-            e.preventDefault();
-            afterNav();
-            onLogout();
-          }}
-        >
-          <span className="inv-nav-link__username">{username}</span>
-          <span className="inv-nav-link__logout-label">Выход</span>
-        </Nav.Link>
-      ) : (
-        <>
-          <Nav.Link as={Link} to={ROUTES.SIGN_IN} className="inv-nav-link" eventKey="signin" onClick={afterNav}>
-            Вход
-          </Nav.Link>
-          <Nav.Link as={Link} to={ROUTES.SIGN_UP} className="inv-nav-link" eventKey="signup" onClick={afterNav}>
-            Регистрация
-          </Nav.Link>
-        </>
-      )}
     </>
   );
 }
 
 export default function AppHeader() {
-  const dispatch = useAppDispatch();
-  const { isAuthenticated, username } = useAppSelector((s) => s.user);
-  const cart = useAppSelector((s) => s.prescription.cart);
+  const draftActive = false;
+  const draftId = undefined;
 
   const innerRef = useRef<HTMLDivElement>(null);
   const brandRef = useRef<HTMLAnchorElement>(null);
@@ -100,26 +54,9 @@ export default function AppHeader() {
   const [navCompact, setNavCompact] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
-  const handleLogout = () => {
-    void (async () => {
-      try {
-        await authLogoutRequest();
-      } catch {
-        // сессию сбрасываем в любом случае
-      }
-      localStorage.removeItem("token");
-      dispatch(resetUserSession());
-    })();
-  };
-
-  const draftActive = Boolean(cart?.has_draft && cart.drugs_count > 0 && cart.id != null);
-
   const navItemsProps: HeaderNavItemsProps = {
     draftActive,
-    draftId: cart?.id,
-    isAuthenticated,
-    username,
-    onLogout: handleLogout,
+    draftId,
     onNavigate: navCompact ? () => setExpanded(false) : undefined,
   };
 
@@ -150,7 +87,7 @@ export default function AppHeader() {
     const ro = new ResizeObserver(() => updateLayout());
     ro.observe(inner);
     return () => ro.disconnect();
-  }, [updateLayout, isAuthenticated, username, draftActive, cart?.id]);
+  }, [updateLayout, draftActive, draftId]);
 
   return (
     <header>
