@@ -33,7 +33,6 @@ const userSlice = createSlice({
         state.loading = false;
       }
     },
-    /** После успешного authLoginRequest / authRegisterRequest + login (только axios, без thunk). */
     setUserSession: (state, action: PayloadAction<{ login: string }>) => {
       state.loading = false;
       state.error = null;
@@ -42,7 +41,6 @@ const userSlice = createSlice({
       const token = localStorage.getItem("token") ?? "";
       state.isModerator = parseIsModeratorFromToken(token);
     },
-    /** После выхода: сброс UI-сессии (запрос logout — axios в вызывающем коде). */
     resetUserSession: () => ({ ...initialState }),
   },
 });

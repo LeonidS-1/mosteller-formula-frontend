@@ -47,7 +47,7 @@ export default function PrescriptionsPage() {
 
   const load = useCallback(
     (background = false) => {
-      void dispatch(fetchPrescriptionsList(background ? { background: true } : undefined));
+      void dispatch(fetchPrescriptionsList({ background }));
     },
     [dispatch],
   );

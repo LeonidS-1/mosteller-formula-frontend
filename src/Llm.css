@@ -1,0 +1,55 @@
+.llm {
+  max-width: 100%;
+  margin: auto;
+  font-family: sans-serif;
+  padding: 20px;
+}
+
+.chat-window {
+  max-height: 240px;
+  overflow-y: auto;
+  background: #f1f3f5;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+}
+
+.msg {
+  padding: 10px 12px;
+  border-radius: 12px;
+  line-height: 1.4;
+  margin-bottom: 6px;
+  background: #ffffff;
+}
+
+.msg.user {
+  background: #e7f1ff;
+}
+
+.msg.assistant {
+  background: #ffffff;
+}
+
+.llm textarea {
+  width: 100%;
+  align-self: center;
+  font-size: 1rem;
+  resize: vertical;
+  border-radius: 8px;
+  min-height: 60px;
+  padding: 8px 10px;
+  border: 1px solid #ced4da;
+}
+
+.llm .loading {
+  padding: 8px 0;
+}
+
+.llm .loading progress {
+  width: 100%;
+}
+
+.llm .error {
+  color: #b91c1c;
+  padding: 8px 0;
+}

@@ -314,11 +314,15 @@ export const finishPrescription = createAsyncThunk(
   },
 );
 
-export type FetchPrescriptionsListArg = { background?: boolean } | void;
+export type FetchPrescriptionsListArg = { background?: boolean };
 
-export const fetchPrescriptionsList = createAsyncThunk(
+export const fetchPrescriptionsList = createAsyncThunk<
+  PrescriptionJSON[],
+  FetchPrescriptionsListArg | undefined,
+  { rejectValue: string }
+>(
   "prescription/fetchList",
-  async (_arg: FetchPrescriptionsListArg, { getState, rejectWithValue }) => {
+  async (_arg, { getState, rejectWithValue }) => {
     try {
       const st = getState() as {
         prescription: { filters: ReturnType<typeof defaultListFilters> };

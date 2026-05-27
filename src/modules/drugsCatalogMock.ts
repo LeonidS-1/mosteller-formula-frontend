@@ -1,4 +1,8 @@
 import type { DrugCatalogFilterCriteria, DrugCatalogItem } from "./types";
+import {
+  drugCatalogItemMatchesSearch,
+  splitDrugCatalogSearchTerms,
+} from "./drugCatalogSearchTerms";
 
 export const DRUGS_CATALOG_MOCK: DrugCatalogItem[] = [
   {
@@ -95,9 +99,9 @@ export function filterDrugsCatalog(
   items: DrugCatalogItem[],
   c: DrugCatalogFilterCriteria,
 ): DrugCatalogItem[] {
-  const t = c.title.trim().toLowerCase();
-  if (!t) return [...items];
-  return items.filter((item) => item.title.toLowerCase().includes(t));
+  const terms = splitDrugCatalogSearchTerms(c.title);
+  if (terms.length === 0) return [...items];
+  return items.filter((item) => drugCatalogItemMatchesSearch(item, terms));
 }
 
 /** Локальный словарь EN-описаний по `drug_id`, чтобы CLIP-поиск работал
